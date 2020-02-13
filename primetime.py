@@ -11,10 +11,10 @@ points = {}
 
 def get_next_player(player):
     if player == "O":
-        return "I"
-    if player == "I":
         return "E"
     if player == "E":
+        return "I"
+    if player == "I":
         return "O"
 
 
@@ -114,6 +114,8 @@ def solve(starting_players: List[str], starting_numbers: List[int]) -> (int, int
         add_point_to_person("O", min(local_points["O"]))
         add_point_to_person("E", min(local_points["E"]))
         add_point_to_person("I", min(local_points["I"]))
+
+        print(player)
 
     return "{} {} {}".format(points["O"], points["E"], points["I"])
 
