@@ -5,6 +5,7 @@ from collections import namedtuple
 from typing import List
 
 Move = namedtuple("Move", "can_move move row col")
+Stage = namedtuple("Stage", "number board move row col")
 
 
 def contains_move_by_pos_and_remove(moves: List[Move], row, col):
@@ -15,25 +16,44 @@ def contains_move_by_pos_and_remove(moves: List[Move], row, col):
     return moves
 
 
-def follow_path(moves: List[Move], last_move: Move, board: List[List[str]], knightx: int, knighty: int, count: int):
+def follow_path(moves: List[Move], board: List[List[str]], knightx: int, knighty: int):
     if knightx == 0 and knighty == 0:
-        return count
+        return 0
 
     # first filter out all the moves that are not possible from the first standpoint.
     # e.g have no meaningful value to use with the following attempts to shift.
     allowed_moves = list(filter(lambda e: e.can_move(board, knightx, knighty), moves))
+    stages = []
+    made_mid = []
 
-    # remove the reverse of a given move.
-    if last_move is not None:
-        allowed_moves = contains_move_by_pos_and_remove(allowed_moves, -last_move.row, -last_move.col)
+    for move in allowed_moves:
+        stages.append(Stage(1, board, move, knightx, knighty))
 
-    if len(allowed_moves) == 0:
-        return count
+    while len(stages) != 0:
+        next_stage: Stage = stages.pop()
 
-    # Generate tree, in each section, branch off to follow that path until it reaches 0,0 or dies.
-    # if it dies, cut it, otherwise continue until all checks are done. and then determine the min
-    # tree length
-    return count
+        if len(made_mid) > 0:
+            if min(made_mid) <= next_stage.number:
+                continue
+
+        nboard, krow, kcol = next_stage.move.move(next_stage.board, next_stage.row, next_stage.col)
+
+        if krow == 0 and kcol == 0:
+            made_mid.append(next_stage.number)
+            continue
+
+        allowed_moves = list(filter(lambda e: e.can_move(nboard, krow, kcol), moves))
+        allowed_moves = contains_move_by_pos_and_remove(allowed_moves, -next_stage.move.row, -next_stage.move.col)
+
+        if len(allowed_moves) == 0:
+            continue
+
+        for move in allowed_moves:
+            stages.append(Stage(next_stage.number + 1, nboard, move, krow, kcol))
+
+    if len(made_mid) == 0:
+        return -1
+    return min(made_mid)
 
 
 def generate_move(row, col):
@@ -72,14 +92,8 @@ def main():
     for idx in range(rows_columns):
         board[idx] = list(sys.stdin.readline().strip())
 
-    print(board)
-    result = follow_path(moves, None, board, 0, 2, 0)
-    if result == 0:
-        print(-1)
-    else:
-        print(result)
-
-    return
+    result = follow_path(moves, board, 0, 2)
+    print(result)
 
 
 if __name__ == '__main__':
