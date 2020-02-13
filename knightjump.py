@@ -87,8 +87,7 @@ def main():
 
     moves = [generate_move(2, 1), generate_move(2, -1), generate_move(-2, 1),
              generate_move(-2, -1), generate_move(1, 2), generate_move(1, -2),
-             generate_move(-1, 2), generate_move(-1, -2)]
-
+             generate_move(-1, 2), generate_move(-1, -2)
     for idx in range(rows_columns):
         board[idx] = list(sys.stdin.readline().strip())
 
