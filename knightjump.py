@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from collections import namedtuple
 from typing import List
@@ -8,23 +9,14 @@ Move = namedtuple("Move", "can_move move row col")
 Stage = namedtuple("Stage", "number board move row col")
 
 
-def contains_move_by_pos_and_remove(moves: List[Move], row, col):
-    for move in moves:
-        if move.row == row and move.col == col:
-            moves.remove(move)
-            return moves
-    return moves
-
-
 def follow_path(moves: List[Move], board: List[List[str]], knightx: int, knighty: int):
-    if knightx == 0 and knighty == 0:
-        return 0
-
     # first filter out all the moves that are not possible from the first standpoint.
     # e.g have no meaningful value to use with the following attempts to shift.
     allowed_moves = list(filter(lambda e: e.can_move(board, knightx, knighty), moves))
+
     stages = []
     made_mid = []
+    made_mid_min = None
 
     for move in allowed_moves:
         stages.append(Stage(1, board, move, knightx, knighty))
@@ -32,21 +24,29 @@ def follow_path(moves: List[Move], board: List[List[str]], knightx: int, knighty
     while len(stages) != 0:
         next_stage: Stage = stages.pop()
 
-        if len(made_mid) > 0:
-            if min(made_mid) <= next_stage.number:
-                continue
+        if len(made_mid) > 0 and made_mid_min <= next_stage.number:
+            continue
 
         nboard, krow, kcol = next_stage.move.move(next_stage.board, next_stage.row, next_stage.col)
 
         if krow == 0 and kcol == 0:
             made_mid.append(next_stage.number)
+            made_mid_min = min(made_mid)
+
+            new_stages = []
+            for stage in stages:
+                if made_mid_min > stage.number:
+                    new_stages.append(stage)
+
+            stages = new_stages
             continue
 
-        allowed_moves = list(filter(lambda e: e.can_move(nboard, krow, kcol), moves))
-        allowed_moves = contains_move_by_pos_and_remove(allowed_moves, -next_stage.move.row, -next_stage.move.col)
+        allowed_moves = []
 
-        if len(allowed_moves) == 0:
-            continue
+        for move in moves:
+            if move.can_move(nboard, krow,
+                             kcol) and move.row != -next_stage.move.row and move.col != next_stage.move.col:
+                allowed_moves.append(move)
 
         for move in allowed_moves:
             stages.append(Stage(next_stage.number + 1, nboard, move, krow, kcol))
@@ -82,17 +82,37 @@ def generate_move(row, col):
 
 
 def main():
+    start_time = time.time()
     rows_columns = int(sys.stdin.readline().strip())
     board = [[]] * rows_columns
 
-    moves = [generate_move(2, 1), generate_move(2, -1), generate_move(-2, 1),
-             generate_move(-2, -1), generate_move(1, 2), generate_move(1, -2),
-             generate_move(-1, 2), generate_move(-1, -2)
+    moves = [
+        generate_move(2, 1),
+        generate_move(1, 2),
+        generate_move(-1, 2),
+        generate_move(2, -1),
+        generate_move(1, -2),
+        generate_move(-2, 1),
+        generate_move(-2, -1),
+        generate_move(-1, -2),
+    ]
+
+    knight_row, knight_col = None, None
+
     for idx in range(rows_columns):
         board[idx] = list(sys.stdin.readline().strip())
 
-    result = follow_path(moves, board, 0, 2)
-    print(result)
+        if knight_row is None and "K" in board[idx]:
+            knight_col = board[idx].index("K")
+            knight_row = idx
+
+    if knight_col == 0 and knight_row == 0:
+        print(0)
+    else:
+        result = follow_path(moves, board, knight_row, knight_col)
+        print(result)
+
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
