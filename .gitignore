@@ -33,3 +33,7 @@
 
 .idea
 venv
+
+#Added by cargo
+
+/target

@@ -6,7 +6,7 @@
 int main(int argc, char* argv[])
 {
 	int test_cases;
-	std::cin >> test_cases;
+	std::cin >> test_cass;
 
 	for (auto i = 0; i < test_cases; ++i)
 	{
